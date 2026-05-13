@@ -95,16 +95,30 @@ function Bazooka:openConfigDialog(opts, optsAppName, ...)
   if optsAppName then
     ACD:SelectGroup(optsAppName, ...)
   end
-  if C_SettingsUtil and C_SettingsUtil.OpenSettingsPanel then
-    C_SettingsUtil.OpenSettingsPanel(self.optsId)
-  elseif Settings then
-    -- FIXME: fix this when Settings can select sub-categories
-    if opts and opts:IsVisible() then
-      return
+
+  local targetFrame = opts or self.opts
+  local targetCategoryName = targetFrame and targetFrame.name or self.AppName
+  local categoryID = (opts == nil and self.optsId) or nil
+
+  if Settings and Settings.GetCategory and not categoryID then
+    local category = Settings.GetCategory(targetCategoryName)
+    if category then
+      categoryID = category:GetID()
     end
-    Settings.OpenToCategory(self.AppName)
+  end
+
+  if type(categoryID) == "number" then
+    if C_SettingsUtil and C_SettingsUtil.OpenSettingsPanel then
+      C_SettingsUtil.OpenSettingsPanel(categoryID)
+    elseif Settings and Settings.OpenToCategory then
+      Settings.OpenToCategory(categoryID)
+    else
+      InterfaceOptionsFrame_OpenToCategory(targetFrame)
+    end
   else
-    InterfaceOptionsFrame_OpenToCategory(opts or self.opts)
+    if InterfaceOptionsFrame_OpenToCategory then
+      InterfaceOptionsFrame_OpenToCategory(targetFrame)
+    end
   end
 end
 
